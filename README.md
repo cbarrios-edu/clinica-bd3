@@ -1,10 +1,6 @@
 # Clinica Medica Privada — BD III
 Sistema de gestion para clinica medica con PostgreSQL + MongoDB + Node.js
 
-## Integrantes
-- Jose Alejandro Vasquez Godinez — 202308082 (PostgreSQL)
-- Companero — Carne: ______________ (MongoDB)
-
 ## Stack tecnologico
 - PostgreSQL 18.3
 - MongoDB 7.0 (Docker)
