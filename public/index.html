@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clínica Médica — BD III</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background: #f0f2f5; color: #333; }
+
+  header {
+    background: #0C447C; color: white; padding: 16px 24px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  header h1 { font-size: 20px; }
+  header span { font-size: 13px; opacity: 0.8; }
+
+  nav {
+    background: white; border-bottom: 1px solid #ddd;
+    display: flex; gap: 4px; padding: 8px 16px; flex-wrap: wrap;
+  }
+  nav button {
+    padding: 8px 14px; border: 1px solid #ddd; border-radius: 6px;
+    background: white; cursor: pointer; font-size: 13px; color: #0C447C;
+    transition: all 0.2s;
+  }
+  nav button:hover, nav button.active {
+    background: #0C447C; color: white; border-color: #0C447C;
+  }
+
+  main { padding: 20px; max-width: 1200px; margin: 0 auto; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .card {
+    background: white; border-radius: 10px; padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-bottom: 16px;
+  }
+  .card h2 { font-size: 16px; color: #0C447C; margin-bottom: 4px; }
+  .card p  { font-size: 13px; color: #666; margin-bottom: 16px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .stat { background: white; border-radius: 10px; padding: 16px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  .stat .num { font-size: 28px; font-weight: bold; color: #0C447C; }
+  .stat .lbl { font-size: 12px; color: #666; margin-top: 4px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #0C447C; color: white; padding: 10px 12px; text-align: left; font-weight: 500; }
+  td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; }
+  tr:hover td { background: #f8f9ff; }
+  tr:last-child td { border-bottom: none; }
+
+  .badge {
+    display: inline-block; padding: 3px 8px; border-radius: 99px;
+    font-size: 11px; font-weight: 500;
+  }
+  .badge-green  { background: #E1F5EE; color: #085041; }
+  .badge-yellow { background: #FFFBEB; color: #B45309; }
+  .badge-red    { background: #FEF2F2; color: #7F1D1D; }
+  .badge-blue   { background: #E6F1FB; color: #0C447C; }
+  .badge-gray   { background: #F4F4F2; color: #555; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group label { font-size: 13px; color: #555; font-weight: 500; }
+  .form-group input, .form-group select {
+    padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px;
+    font-size: 14px; outline: none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: #0C447C; }
+  .form-full { grid-column: 1 / -1; }
+
+  .btn {
+    padding: 10px 20px; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s;
+  }
+  .btn-primary { background: #0C447C; color: white; }
+  .btn-primary:hover { background: #0a3a6b; }
+  .btn-danger  { background: #7F1D1D; color: white; }
+  .btn-danger:hover  { background: #6b1818; }
+
+  .alert {
+    padding: 12px 16px; border-radius: 6px; margin-top: 12px;
+    font-size: 13px; display: none;
+  }
+  .alert-ok  { background: #E1F5EE; color: #085041; border: 1px solid #a7d7c5; }
+  .alert-err { background: #FEF2F2; color: #7F1D1D; border: 1px solid #f5c6c6; }
+
+  .loading { text-align: center; color: #999; padding: 40px; font-size: 14px; }
+  .empty   { text-align: center; color: #aaa; padding: 40px; font-size: 14px; }
+
+  .tag { display: inline-block; background: #E6F1FB; color: #0C447C; padding: 2px 7px; border-radius: 4px; font-size: 11px; margin: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🏥 Clínica Médica Privada</h1>
+    <span>Sistema de Gestión — Bases de Datos III</span>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="show('inicio')">🏠 Inicio</button>
+  <button onclick="show('agenda')">📅 Agenda Diaria</button>
+  <button onclick="show('facturas')">💰 Facturas Pendientes</button>
+  <button onclick="show('mensual')">📊 Facturación Mensual</button>
+  <button onclick="show('ranking')">🏆 Ranking Médicos</button>
+  <button onclick="show('diagnosticos')">🩺 Diagnósticos</button>
+  <button onclick="show('medicamentos')">💊 Medicamentos</button>
+  <button onclick="show('signos')">❤️ Signos Vitales</button>
+  <button onclick="show('consultas')">📈 Tiempo Consultas</button>
+  <button onclick="show('operaciones')">⚙️ Operaciones</button>
+</nav>
+
+<main>
+
+<!-- INICIO -->
+<div id="inicio" class="section active">
+  <div class="stats" id="stats-inicio">
+    <div class="stat"><div class="num" id="s-medicos">-</div><div class="lbl">Médicos</div></div>
+    <div class="stat"><div class="num" id="s-pacientes">-</div><div class="lbl">Pacientes</div></div>
+    <div class="stat"><div class="num" id="s-citas">-</div><div class="lbl">Citas</div></div>
+    <div class="stat"><div class="num" id="s-facturas">-</div><div class="lbl">Facturas</div></div>
+    <div class="stat"><div class="num" id="s-pagos">-</div><div class="lbl">Pagos</div></div>
+    <div class="stat"><div class="num" id="s-historiales">-</div><div class="lbl">Historiales MongoDB</div></div>
+  </div>
+  <div class="card">
+    <h2>Sistema de Gestión — Clínica Médica Privada</h2>
+    <p>PostgreSQL + MongoDB + Node.js | Bases de Datos III</p>
+    <table>
+      <tr><th>Componente</th><th>Tecnología</th><th>Estado</th></tr>
+      <tr><td>Base de datos relacional</td><td>PostgreSQL 18.3</td><td><span class="badge badge-green">✓ Activo</span></td></tr>
+      <tr><td>Base de datos NoSQL</td><td>MongoDB 7.0 (Docker)</td><td><span class="badge badge-green">✓ Activo</span></td></tr>
+      <tr><td>API REST</td><td>Node.js 22 + Express</td><td><span class="badge badge-green">✓ Corriendo</span></td></tr>
+      <tr><td>Tablas PostgreSQL</td><td>11 tablas normalizadas a 3FN</td><td><span class="badge badge-blue">100%</span></td></tr>
+      <tr><td>Colecciones MongoDB</td><td>historiales_clinicos + auditoria_eventos</td><td><span class="badge badge-blue">100%</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- AGENDA DIARIA -->
+<div id="agenda" class="section">
+  <div class="card">
+    <h2>📅 Agenda Diaria</h2>
+    <p>Citas del día de hoy — Vista normal v_agenda_diaria (RC-01)</p>
+    <button class="btn btn-primary" onclick="cargarAgenda()">🔄 Cargar agenda</button>
+    <div id="tabla-agenda" class="loading" style="display:none">Cargando...</div>
+  </div>
+</div>
+
+<!-- FACTURAS PENDIENTES -->
+<div id="facturas" class="section">
+  <div class="card">
+    <h2>💰 Facturas Pendientes</h2>
+    <p>Facturas con saldo pendiente — Vista normal v_facturas_pendientes (RC-02)</p>
+    <button class="btn btn-primary" onclick="cargarFacturas()">🔄 Cargar facturas</button>
+    <div id="tabla-facturas" style="display:none"></div>
+  </div>
+</div>
+
+<!-- FACTURACIÓN MENSUAL -->
+<div id="mensual" class="section">
+  <div class="card">
+    <h2>📊 Facturación Mensual por Especialidad</h2>
+    <p>Reporte gerencial — Vista materializada vm_facturacion_mensual (RC-03)</p>
+    <button class="btn btn-primary" onclick="cargarMensual()">🔄 Cargar reporte</button>
+    <div id="tabla-mensual" style="display:none"></div>
+  </div>
+</div>
+
+<!-- RANKING MÉDICOS -->
+<div id="ranking" class="section">
+  <div class="card">
+    <h2>🏆 Ranking Trimestral de Médicos</h2>
+    <p>Médicos por citas atendidas y monto facturado — Vista materializada vm_ranking_medicos_trimestre (RC-04)</p>
+    <button class="btn btn-primary" onclick="cargarRanking()">🔄 Cargar ranking</button>
+    <div id="tabla-ranking" style="display:none"></div>
+  </div>
+</div>
+
+<!-- DIAGNÓSTICOS -->
+<div id="diagnosticos" class="section">
+  <div class="card">
+    <h2>🩺 Top 5 Diagnósticos por Especialidad</h2>
+    <p>Último trimestre — Pipeline aggregation MongoDB (RC-07)</p>
+    <button class="btn btn-primary" onclick="cargarDiagnosticos()">🔄 Cargar diagnósticos</button>
+    <div id="tabla-diagnosticos" style="display:none"></div>
+  </div>
+</div>
+
+<!-- MEDICAMENTOS -->
+<div id="medicamentos" class="section">
+  <div class="card">
+    <h2>💊 Medicamentos por Especialidad</h2>
+    <p>Pipeline con $facet — MongoDB (RC-08)</p>
+    <button class="btn btn-primary" onclick="cargarMedicamentos()">🔄 Cargar medicamentos</button>
+    <div id="tabla-medicamentos" style="display:none"></div>
+  </div>
+</div>
+
+<!-- SIGNOS VITALES -->
+<div id="signos" class="section">
+  <div class="card">
+    <h2>❤️ Signos Vitales por Grupo Etario</h2>
+    <p>Promedio de signos vitales — Pipeline MongoDB (RC-09)</p>
+    <button class="btn btn-primary" onclick="cargarSignos()">🔄 Cargar signos vitales</button>
+    <div id="tabla-signos" style="display:none"></div>
+  </div>
+</div>
+
+<!-- TIEMPO ENTRE CONSULTAS -->
+<div id="consultas" class="section">
+  <div class="card">
+    <h2>📈 Tiempo Promedio Entre Consultas</h2>
+    <p>Pacientes con seguimiento frecuente — Pipeline MongoDB (RC-10)</p>
+    <button class="btn btn-primary" onclick="cargarConsultas()">🔄 Cargar reporte</button>
+    <div id="tabla-consultas" style="display:none"></div>
+  </div>
+</div>
+
+<!-- OPERACIONES CRÍTICAS -->
+<div id="operaciones" class="section">
+
+  <!-- Registrar Pago -->
+  <div class="card">
+    <h2>💳 Registrar Pago</h2>
+    <p>Invoca sp_registrar_pago — operación atómica (OC-01)</p>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>ID Factura</label>
+        <input type="number" id="p-factura" placeholder="Ej: 1">
+      </div>
+      <div class="form-group">
+        <label>Monto</label>
+        <input type="number" id="p-monto" step="0.01" placeholder="Ej: 150.00">
+      </div>
+      <div class="form-group">
+        <label>Método de Pago</label>
+        <select id="p-metodo">
+          <option value="efectivo">Efectivo</option>
+          <option value="tarjeta">Tarjeta</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="cheque">Cheque</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>ID Usuario</label>
+        <input type="number" id="p-usuario" value="1">
+      </div>
+    </div>
+    <br>
+    <button class="btn btn-primary" onclick="registrarPago()">💳 Registrar Pago</button>
+    <div class="alert alert-ok"  id="alert-pago-ok"></div>
+    <div class="alert alert-err" id="alert-pago-err"></div>
+  </div>
+
+  <!-- Cancelar Cita -->
+  <div class="card">
+    <h2>❌ Cancelar Cita</h2>
+    <p>Invoca sp_cancelar_cita — operación atómica (OC-02)</p>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>ID Cita</label>
+        <input type="number" id="c-cita" placeholder="Ej: 5">
+      </div>
+      <div class="form-group">
+        <label>ID Usuario</label>
+        <input type="number" id="c-usuario" value="1">
+      </div>
+      <div class="form-group form-full">
+        <label>Motivo de Cancelación</label>
+        <input type="text" id="c-motivo" placeholder="Ej: Paciente no pudo asistir">
+      </div>
+    </div>
+    <br>
+    <button class="btn btn-danger" onclick="cancelarCita()">❌ Cancelar Cita</button>
+    <div class="alert alert-ok"  id="alert-cita-ok"></div>
+    <div class="alert alert-err" id="alert-cita-err"></div>
+  </div>
+
+  <!-- Saldo Paciente -->
+  <div class="card">
+    <h2>💰 Saldo de Paciente</h2>
+    <p>Invoca fn_saldo_paciente (RC-06)</p>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>ID Paciente</label>
+        <input type="number" id="s-paciente" placeholder="Ej: 1">
+      </div>
+    </div>
+    <br>
+    <button class="btn btn-primary" onclick="consultarSaldo()">🔍 Consultar Saldo</button>
+    <div class="alert alert-ok"  id="alert-saldo-ok"></div>
+    <div class="alert alert-err" id="alert-saldo-err"></div>
+  </div>
+
+</div>
+
+</main>
+
+<script>
+const API = 'http://localhost:3000/api';
+
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  if (id === 'inicio') cargarStats();
+}
+
+function badge(estado) {
+  const map = {
+    programada: 'badge-blue', confirmada: 'badge-blue',
+    atendida: 'badge-green', cancelada: 'badge-red',
+    no_asistio: 'badge-gray', pendiente: 'badge-yellow',
+    pagada_parcial: 'badge-yellow', pagada: 'badge-green', anulada: 'badge-red'
+  };
+  return `<span class="badge ${map[estado]||'badge-gray'}">${estado}</span>`;
+}
+
+function money(val) {
+  return 'Q ' + parseFloat(val||0).toLocaleString('es-GT', {minimumFractionDigits:2});
+}
+
+async function cargarStats() {
+  try {
+    const [fp, fm, rm, dg] = await Promise.all([
+      fetch(`${API}/reportes/facturas-pendientes`).then(r=>r.json()),
+      fetch(`${API}/reportes/facturacion-mensual`).then(r=>r.json()),
+      fetch(`${API}/reportes/ranking-medicos`).then(r=>r.json()),
+      fetch(`${API}/reportes/diagnosticos`).then(r=>r.json()),
+    ]);
+    document.getElementById('s-medicos').textContent = rm.data?.length || '-';
+    document.getElementById('s-pacientes').textContent = '-';
+    document.getElementById('s-citas').textContent = '-';
+    document.getElementById('s-facturas').textContent = fp.data?.length || '-';
+    document.getElementById('s-pagos').textContent = '-';
+    document.getElementById('s-historiales').textContent = dg.data?.length > 0 ? '150+' : '-';
+  } catch(e) {}
+}
+
+async function cargarAgenda() {
+  const el = document.getElementById('tabla-agenda');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="loading">Cargando...</div>';
+  try {
+    const r = await fetch(`${API}/reportes/agenda-diaria`).then(r=>r.json());
+    if (!r.data?.length) { el.innerHTML = '<div class="empty">No hay citas para hoy</div>'; return; }
+    el.innerHTML = `<br><table>
+      <tr><th>ID</th><th>Hora</th><th>Paciente</th><th>Médico</th><th>Especialidad</th><th>Estado</th><th>Duración</th></tr>
+      ${r.data.map(c=>`<tr>
+        <td>${c.cita_id}</td>
+        <td>${new Date(c.fecha_hora).toLocaleTimeString('es-GT',{hour:'2-digit',minute:'2-digit'})}</td>
+        <td>${c.paciente}</td><td>${c.medico}</td><td>${c.especialidad}</td>
+        <td>${badge(c.estado)}</td><td>${c.duracion_min} min</td>
+      </tr>`).join('')}
+    </table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+async function cargarFacturas() {
+  const el = document.getElementById('tabla-facturas');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="loading">Cargando...</div>';
+  try {
+    const r = await fetch(`${API}/reportes/facturas-pendientes`).then(r=>r.json());
+    if (!r.data?.length) { el.innerHTML = '<div class="empty">No hay facturas pendientes</div>'; return; }
+    el.innerHTML = `<br><table>
+      <tr><th>ID</th><th>Paciente</th><th>Total</th><th>Pagado</th><th>Saldo</th><th>Estado</th><th>Días</th></tr>
+      ${r.data.map(f=>`<tr>
+        <td>${f.factura_id}</td><td>${f.paciente}</td>
+        <td>${money(f.total)}</td><td>${money(f.total_pagado)}</td>
+        <td><b>${money(f.saldo_pendiente)}</b></td>
+        <td>${badge(f.estado)}</td><td>${f.dias_antiguedad}</td>
+      </tr>`).join('')}
+    </table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+async function cargarMensual() {
+  const el = document.getElementById('tabla-mensual');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="loading">Cargando...</div>';
+  try {
+    const r = await fetch(`${API}/reportes/facturacion-mensual`).then(r=>r.json());
+    if (!r.data?.length) { el.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+    el.innerHTML = `<br><table>
+      <tr><th>Mes</th><th>Especialidad</th><th>Facturas</th><th>Facturado</th><th>Cobrado</th><th>Saldo</th></tr>
+      ${r.data.map(m=>`<tr>
+        <td>${new Date(m.mes).toLocaleDateString('es-GT',{year:'numeric',month:'long'})}</td>
+        <td>${m.especialidad}</td><td>${m.total_facturas}</td>
+        <td>${money(m.total_facturado)}</td><td>${money(m.total_cobrado)}</td>
+        <td>${money(m.saldo_pendiente)}</td>
+      </tr>`).join('')}
+    </table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+async function cargarRanking() {
+  const el = document.getElementById('tabla-ranking');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="loading">Cargando...</div>';
+  try {
+    const r = await fetch(`${API}/reportes/ranking-medicos`).then(r=>r.json());
+    if (!r.data?.length) { el.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+    el.innerHTML = `<br><table>
+      <tr><th>#</th><th>Médico</th><th>Especialidad</th><th>Citas</th><th>Facturado</th><th>Rank Citas</th><th>Rank Facturación</th></tr>
+      ${r.data.map((m,i)=>`<tr>
+        <td>${i+1}</td><td>${m.medico}</td><td>${m.especialidad}</td>
+        <td>${m.citas_atendidas}</td><td>${money(m.monto_facturado)}</td>
+        <td><span class="badge badge-blue">#${m.ranking_citas}</span></td>
+        <td><span class="badge badge-green">#${m.ranking_facturacion}</span></td>
+      </tr>`).join('')}
+    </table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+async function cargarDiagnosticos() {
+  const el = document.getElementById('tabla-diagnosticos');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="loading">Cargando...</div>';
+  try {
+    const r = await fetch(`${API}/reportes/diagnosticos`).then(r=>r.json());
+    if (!r.data?.length) { el.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+    let html = '<br>';
+    r.data.forEach(esp => {
+      html += `<h3 style="padding:12px 0 8px;color:#0C447C;text-transform:capitalize">${esp.especialidad||esp._id}</h3>
+      <table><tr><th>Diagnóstico</th><th>Total</th></tr>
+      ${(esp.top5||[]).map(d=>`<tr><td style="text-transform:capitalize">${d.diagnostico}</td><td>${d.total}</td></tr>`).join('')}
+      </table><br>`;
+    });
+    el.innerHTML = html;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+async function cargarMedicamentos() {
+  const el = document.getElementById('tabla-medicamentos');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="loading">Cargando...</div>';
+  try {
+    const r = await fetch(`${API}/reportes/medicamentos`).then(r=>r.json());
+    const data = r.data?.[0];
+    if (!data) { el.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+    let html = '<br><h3 style="padding:8px 0;color:#0C447C">Top medicamentos por especialidad</h3>';
+    (data.por_especialidad||[]).forEach(esp => {
+      html += `<h4 style="padding:8px 0 4px;text-transform:capitalize;color:#085041">${esp.especialidad}</h4>
+      <table><tr><th>Medicamento</th><th>Prescripciones</th></tr>
+      ${(esp.top5||[]).map(m=>`<tr><td style="text-transform:capitalize">${m.nombre}</td><td>${m.total}</td></tr>`).join('')}
+      </table><br>`;
+    });
+    html += `<h3 style="padding:8px 0;color:#0C447C">Top 10 globales</h3>
+    <table><tr><th>Medicamento</th><th>Total prescripciones</th></tr>
+    ${(data.totales_globales||[]).map(m=>`<tr><td style="text-transform:capitalize">${m._id}</td><td>${m.total}</td></tr>`).join('')}
+    </table>`;
+    el.innerHTML = html;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+async function cargarSignos() {
+  const el = document.getElementById('tabla-signos');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="loading">Cargando...</div>';
+  try {
+    const r = await fetch(`${API}/reportes/signos-vitales`).then(r=>r.json());
+    if (!r.data?.length) { el.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+    el.innerHTML = `<br><table>
+      <tr><th>Grupo Etario</th><th>Frec. Cardíaca Prom.</th><th>Temperatura Prom.</th><th>Peso Prom.</th><th>Consultas</th></tr>
+      ${r.data.map(g=>`<tr>
+        <td>${g.grupo_etario}</td>
+        <td>${g.avg_frec_cardiaca||g.avg_frecuencia_cardiaca||'-'} bpm</td>
+        <td>${g.avg_temperatura||'-'} °C</td>
+        <td>${g.avg_peso||'-'} kg</td>
+        <td>${g.total_consultas}</td>
+      </tr>`).join('')}
+    </table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+async function cargarConsultas() {
+  const el = document.getElementById('tabla-consultas');
+  el.style.display = 'block';
+  el.innerHTML = '<div class="loading">Cargando...</div>';
+  try {
+    const r = await fetch(`${API}/reportes/tiempo-consultas`).then(r=>r.json());
+    if (!r.data?.length) { el.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+    el.innerHTML = `<br><table>
+      <tr><th>Paciente</th><th>Total Consultas</th><th>Promedio días entre consultas</th></tr>
+      ${r.data.map(p=>`<tr>
+        <td>${p.nombre_paciente}</td>
+        <td>${p.total_consultas}</td>
+        <td>${p.promedio_dias_entre_consultas} días</td>
+      </tr>`).join('')}
+    </table>`;
+  } catch(e) { el.innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
+}
+
+async function registrarPago() {
+  const ok  = document.getElementById('alert-pago-ok');
+  const err = document.getElementById('alert-pago-err');
+  ok.style.display = err.style.display = 'none';
+  try {
+    const r = await fetch(`${API}/pagos`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        factura_id: parseInt(document.getElementById('p-factura').value),
+        monto:      parseFloat(document.getElementById('p-monto').value),
+        metodo_pago: document.getElementById('p-metodo').value,
+        usuario_id: parseInt(document.getElementById('p-usuario').value),
+      })
+    }).then(r=>r.json());
+    if (r.ok) { ok.style.display='block'; ok.textContent = '✓ Pago registrado correctamente'; }
+    else      { err.style.display='block'; err.textContent = '✗ Error: ' + r.error; }
+  } catch(e) { err.style.display='block'; err.textContent = '✗ Error de conexión: ' + e.message; }
+}
+
+async function cancelarCita() {
+  const ok  = document.getElementById('alert-cita-ok');
+  const err = document.getElementById('alert-cita-err');
+  ok.style.display = err.style.display = 'none';
+  try {
+    const r = await fetch(`${API}/citas/${document.getElementById('c-cita').value}/cancelar`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        motivo:     document.getElementById('c-motivo').value,
+        usuario_id: parseInt(document.getElementById('c-usuario').value),
+      })
+    }).then(r=>r.json());
+    if (r.ok) { ok.style.display='block'; ok.textContent = '✓ Cita cancelada correctamente'; }
+    else      { err.style.display='block'; err.textContent = '✗ Error: ' + r.error; }
+  } catch(e) { err.style.display='block'; err.textContent = '✗ Error de conexión: ' + e.message; }
+}
+
+async function consultarSaldo() {
+  const ok  = document.getElementById('alert-saldo-ok');
+  const err = document.getElementById('alert-saldo-err');
+  ok.style.display = err.style.display = 'none';
+  try {
+    const id = document.getElementById('s-paciente').value;
+    const r  = await fetch(`${API}/pacientes/${id}/saldo`).then(r=>r.json());
+    if (r.ok) { ok.style.display='block'; ok.textContent = `✓ Saldo pendiente del paciente ${id}: Q ${parseFloat(r.saldo).toFixed(2)}`; }
+    else      { err.style.display='block'; err.textContent = '✗ Error: ' + r.error; }
+  } catch(e) { err.style.display='block'; err.textContent = '✗ Error de conexión: ' + e.message; }
+}
+
+// Cargar stats al inicio
+cargarStats();
+</script>
+</body>
+</html>
