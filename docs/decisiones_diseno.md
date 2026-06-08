@@ -3,7 +3,7 @@ Proyecto Final — Bases de Datos III — Clinica Medica Privada
 
 ## Integrantes
 - Jose Alejandro Vasquez Godinez — 202308082
-- Companero — Carne: ______________
+- Carlos Eduardo Barrios Lopez - 202408075 
 
 ---
 
